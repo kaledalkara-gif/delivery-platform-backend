@@ -48,17 +48,17 @@ export class Shipment extends BaseEntity {
   destinationLongitude!: number;
 
   @Column({ type: 'decimal', precision: 8, scale: 2, nullable: true })
-  calculatedDistanceKm!: number;
+  calculatedDistanceKm!: number | null;
 
   @Column({ type: 'integer', nullable: true })
-  estimatedDurationSeconds!: number;
+  estimatedDurationSeconds!: number | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  startedAt!: Date;
+  startedAt!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  completedAt!: Date;
+  completedAt!: Date | null;
 
   @Column({ type: 'text', nullable: true })
-  routeGeometry!: string; // GeoJSON or encoded polyline
+  routeGeometry!: string | null;
 }

@@ -23,8 +23,8 @@ export enum OrderStatus {
 }
 
 export enum DeliveryMode {
-  EXPRESS_DIRECT = 'express_direct',   // Pickup → Dropoff
-  STANDARD_DEPOT = 'standard_depot',   // Pickup → Depot → Dropoff
+  EXPRESS_DIRECT = 'express_direct',
+  STANDARD_DEPOT = 'standard_depot',
 }
 
 export enum TimeWindowPreference {
@@ -43,10 +43,10 @@ export class Order extends BaseEntity {
 
   @ManyToOne(() => Driver, { nullable: true })
   @JoinColumn({ name: 'driver_id' })
-  driver!: Driver;
+  driver!: Driver | null;
 
   @Column({ name: 'driver_id', type: 'uuid', nullable: true })
-  driverId!: string;
+  driverId!: string | null;
 
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
   status!: OrderStatus;
@@ -65,13 +65,13 @@ export class Order extends BaseEntity {
   pickupLongitude!: number;
 
   @Column({ type: 'text', nullable: true })
-  pickupInstructions!: string;
+  pickupInstructions!: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  pickupContactName!: string;
+  pickupContactName!: string | null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  pickupContactPhone!: string;
+  pickupContactPhone!: string | null;
 
   // Dropoff information
   @Column({ type: 'text' })
@@ -84,31 +84,29 @@ export class Order extends BaseEntity {
   dropoffLongitude!: number;
 
   @Column({ type: 'text', nullable: true })
-  dropoffInstructions!: string;
+  dropoffInstructions!: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  dropoffContactName!: string;
+  dropoffContactName!: string | null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  dropoffContactPhone!: string;
+  dropoffContactPhone!: string | null;
 
-  // Time windows
   @Column({ type: 'enum', enum: TimeWindowPreference, default: TimeWindowPreference.ASAP })
   timeWindowPreference!: TimeWindowPreference;
 
   @Column({ type: 'timestamp', nullable: true })
-  pickupEarliestTime!: Date;
+  pickupEarliestTime!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  pickupLatestTime!: Date;
+  pickupLatestTime!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  deliveryEarliestTime!: Date;
+  deliveryEarliestTime!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  deliveryLatestTime!: Date;
+  deliveryLatestTime!: Date | null;
 
-  // Pricing
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalAmount!: number;
 
@@ -118,28 +116,26 @@ export class Order extends BaseEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   platformFee!: number;
 
-  // Timestamps (operational)
   @Column({ type: 'timestamp', nullable: true })
-  assignedAt!: Date;
+  assignedAt!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  pickupArrivalAt!: Date;
+  pickupArrivalAt!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  pickupCompletedAt!: Date;
+  pickupCompletedAt!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  depotArrivalAt!: Date;
+  depotArrivalAt!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  depotDepartureAt!: Date;
+  depotDepartureAt!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  deliveredAt!: Date;
+  deliveredAt!: Date | null;
 
-  // One-Time Password (for delivery proof)
   @Column({ type: 'varchar', length: 6, nullable: true })
-  deliveryOtp!: string;
+  deliveryOtp!: string | null;
 
   // Relationships
   @OneToMany(() => Package, pkg => pkg.order, { cascade: true })

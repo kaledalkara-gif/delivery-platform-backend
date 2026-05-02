@@ -35,11 +35,11 @@ export class Payment extends BaseEntity {
   method!: PaymentMethod;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  stripePaymentIntentId!: string;
+  stripePaymentIntentId!: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  stripeTransactionId!: string;
+  stripeTransactionId!: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  paidAt!: Date;
+  paidAt!: Date | null;
 }

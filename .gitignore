@@ -1,3 +1,35 @@
-node_modules/ 
-dist/ 
-.env 
+
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment variables (CRITICAL - never commit .env!)
+.env
+.env.local
+.env.production
+
+# Database (if you accidentally put it in project folder)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeORM migrations (optional - some teams commit them, some don't)
+# src/database/migrations/*.ts  # Uncomment if you DO want to commit migrations

@@ -13,19 +13,19 @@ export enum BatchStatus {
 @Entity('batches')
 export class Batch extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
-  zoneName!: string; // e.g., "North Zone", "Downtown"
+  zoneName!: string;
 
   @Column({ type: 'enum', enum: BatchStatus, default: BatchStatus.FORMING })
   status!: BatchStatus;
 
   @Column({ type: 'uuid', nullable: true })
-  assignedDriverId!: string;
+  assignedDriverId!: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  dispatchedAt!: Date;
+  dispatchedAt!: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  completedAt!: Date;
+  completedAt!: Date | null;
 
   @OneToMany(() => BatchItem, item => item.batch, { cascade: true })
   items!: BatchItem[];

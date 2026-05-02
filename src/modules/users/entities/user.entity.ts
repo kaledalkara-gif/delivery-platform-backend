@@ -19,7 +19,7 @@ export class User extends BaseEntity {
   email!: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  phone!: string;
+  phone!: string | null;
 
   @Column({ type: 'varchar', length: 255 })
   passwordHash!: string;
@@ -31,19 +31,19 @@ export class User extends BaseEntity {
   role!: UserRole;
 
   @Column({ type: 'text', nullable: true })
-  address!: string;
+  address!: string | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
-  defaultPickupLat!: number;
+  defaultPickupLat!: number | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
-  defaultPickupLng!: number;
+  defaultPickupLng!: number | null;
 
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
 
   @Column({ type: 'text', nullable: true })
-  firebaseToken!: string; // For push notifications
+  firebaseToken!: string | null;
 
   // Relationships
   @OneToMany(() => Order, order => order.user)

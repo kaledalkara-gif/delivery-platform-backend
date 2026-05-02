@@ -20,7 +20,7 @@ export class DriverLocation extends BaseEntity {
   longitude!: number;
 
   @Column({ type: 'integer', nullable: true })
-  accuracy!: number; // in meters
+  accuracy!: number | null;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   recordedAt!: Date;

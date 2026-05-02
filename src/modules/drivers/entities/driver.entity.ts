@@ -34,26 +34,23 @@ export class Driver extends BaseEntity {
   vehicleType!: VehicleType;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  vehiclePlate!: string;
+  vehiclePlate!: string | null;
 
   @Column({ type: 'enum', enum: DriverStatus, default: DriverStatus.OFFLINE })
   status!: DriverStatus;
 
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
-  currentLat!: number;
+  currentLat!: number | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
-  currentLng!: number;
+  currentLng!: number | null;
 
-  // Capacity in kg
   @Column({ type: 'decimal', precision: 8, scale: 2, default: 50 })
   maxWeightKg!: number;
 
-  // Capacity in cm³ (for 50cm³ cartons)
   @Column({ type: 'integer', default: 50000 })
   maxVolumeCm3!: number;
 
-  // Current load
   @Column({ type: 'decimal', precision: 8, scale: 2, default: 0 })
   currentWeightKg!: number;
 

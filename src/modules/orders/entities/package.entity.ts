@@ -37,7 +37,6 @@ export class Package extends BaseEntity {
   @Column({ type: 'integer' })
   heightCm!: number;
 
-  // Volume in cm³ (calculated: length * width * height)
   @Column({ type: 'integer' })
   volumeCm3!: number;
 
@@ -51,17 +50,17 @@ export class Package extends BaseEntity {
   isPerishable!: boolean;
 
   @Column({ type: 'text', nullable: true })
-  description!: string;
+  description!: string | null;
 
   @Column({ type: 'enum', enum: PackageCondition, default: PackageCondition.GOOD })
   conditionAtPickup!: PackageCondition;
 
   @Column({ type: 'text', nullable: true })
-  pickupPhotoUrl!: string;
+  pickupPhotoUrl!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  pickupPhotoLocationUrl!: string;
+  pickupPhotoLocationUrl!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  deliveryPhotoUrl!: string;
+  deliveryPhotoUrl!: string | null;
 }

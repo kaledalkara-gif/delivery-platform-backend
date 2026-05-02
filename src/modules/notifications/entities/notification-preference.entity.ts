@@ -1,3 +1,4 @@
+// src/modules/notifications/entities/notification-preference.entity.ts
 import { Entity, Column, ManyToOne, JoinColumn, Unique } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { User } from '../../users/entities/user.entity';

@@ -21,8 +21,8 @@ export class BatchItem extends BaseEntity {
   orderId!: string;
 
   @Column({ type: 'integer' })
-  deliverySequence!: number; // Order of delivery within the batch
+  deliverySequence!: number;
 
   @Column({ type: 'timestamp', nullable: true })
-  deliveredAt!: Date;
+  deliveredAt!: Date | null;
 }
