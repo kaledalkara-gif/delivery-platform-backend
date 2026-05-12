@@ -2,16 +2,13 @@ import {
     IsString,
     IsNumber,
     IsOptional,
-    IsEnum,
-    IsUUID,
-    Min,
-    Max,
     IsArray,
     ValidateNested,
     IsBoolean,
+    Min,
+    Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DeliveryMode, TimeWindowPreference } from '../entities/order.entity';
 
 export class PackageDto {
     @IsString()
@@ -51,9 +48,13 @@ export class AddressDto {
     address!: string;
 
     @IsNumber()
+    @Min(-90)
+    @Max(90)
     latitude!: number;
 
     @IsNumber()
+    @Min(-180)
+    @Max(180)
     longitude!: number;
 
     @IsString()
@@ -70,8 +71,8 @@ export class AddressDto {
 }
 
 export class CreateOrderDto {
-    @IsEnum(DeliveryMode)
-    deliveryMode!: DeliveryMode;
+    @IsString()
+    deliveryMode!: 'express_direct' | 'standard_depot';
 
     @ValidateNested()
     @Type(() => AddressDto)
@@ -86,9 +87,9 @@ export class CreateOrderDto {
     @Type(() => PackageDto)
     packages!: PackageDto[];
 
-    @IsEnum(TimeWindowPreference)
+    @IsString()
     @IsOptional()
-    timeWindowPreference?: TimeWindowPreference;
+    timeWindowPreference?: 'asap' | 'specific';
 
     @IsString()
     @IsOptional()
