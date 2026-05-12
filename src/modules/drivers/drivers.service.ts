@@ -1,4 +1,250 @@
-import { Injectable } from '@nestjs/common';
+import {
+    Injectable,
+    NotFoundException,
+    BadRequestException,
+    ForbiddenException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Driver, DriverStatus } from './entities/driver.entity';
+import { DriverLocation } from './entities/driver-location.entity';
+import { User } from '../users/entities/user.entity';
+import { Order, OrderStatus } from '../orders/entities/order.entity';
+import { UpdateLocationDto } from './dto/update-location.dto';
+import { UpdateStatusDto } from './dto/update-status.dto';
+import { AcceptOrderDto } from './dto/accept-order.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType, NotificationChannel, NotificationPriority } from '../notifications/entities/notification.entity';
 
 @Injectable()
-export class DriversService {}
+export class DriversService {
+    constructor(
+        @InjectRepository(Driver)
+        private driverRepository: Repository<Driver>,
+        @InjectRepository(DriverLocation)
+        private driverLocationRepository: Repository<DriverLocation>,
+        @InjectRepository(User)
+        private userRepository: Repository<User>,
+        @InjectRepository(Order)
+        private orderRepository: Repository<Order>,
+        private notificationsService: NotificationsService,
+    ) { }
+
+    async getDriverProfile(userId: string): Promise<Driver> {
+        const driver = await this.driverRepository.findOne({
+            where: { userId },
+            relations: ['user'],
+        });
+
+        if (!driver) {
+            throw new NotFoundException('Driver profile not found');
+        }
+
+        return driver;
+    }
+
+    async updateLocation(userId: string, updateLocationDto: UpdateLocationDto): Promise<Driver> {
+        const driver = await this.getDriverProfile(userId);
+
+        // Update driver's current location
+        driver.currentLat = updateLocationDto.latitude;
+        driver.currentLng = updateLocationDto.longitude;
+        await this.driverRepository.save(driver);
+
+        // Save location history
+        const locationHistory = this.driverLocationRepository.create({
+            driverId: driver.id,
+            latitude: updateLocationDto.latitude,
+            longitude: updateLocationDto.longitude,
+            accuracy: updateLocationDto.accuracy || null,
+        });
+        await this.driverLocationRepository.save(locationHistory);
+
+        return driver;
+    }
+
+    async updateStatus(userId: string, updateStatusDto: UpdateStatusDto): Promise<Driver> {
+        const driver = await this.getDriverProfile(userId);
+
+        driver.status = updateStatusDto.status;
+        await this.driverRepository.save(driver);
+
+        return driver;
+    }
+
+    async getNearbyOrders(userId: string): Promise<Order[]> {
+        const driver = await this.getDriverProfile(userId);
+
+        if (!driver.currentLat || !driver.currentLng) {
+            throw new BadRequestException('Driver location not set. Please update location first.');
+        }
+
+        if (driver.status !== DriverStatus.ONLINE) {
+            throw new BadRequestException('Driver must be online to see orders');
+        }
+
+        // Find pending orders within 5km radius
+        const radiusKm = 5;
+        const orders = await this.orderRepository
+            .createQueryBuilder('order')
+            .where('order.status = :status', { status: OrderStatus.PENDING })
+            .andWhere(
+                `earth_distance(
+          ll_to_earth(order.pickupLatitude, order.pickupLongitude),
+          ll_to_earth(:lat, :lng)
+        ) <= :radius * 1000`,
+                {
+                    lat: driver.currentLat,
+                    lng: driver.currentLng,
+                    radius: radiusKm,
+                },
+            )
+            .leftJoinAndSelect('order.packages', 'packages')
+            .orderBy('earth_distance(ll_to_earth(order.pickupLatitude, order.pickupLongitude), ll_to_earth(:lat, :lng))', 'ASC')
+            .setParameters({ lat: driver.currentLat, lng: driver.currentLng })
+            .take(20)
+            .getMany();
+
+        return orders;
+    }
+
+    async acceptOrder(userId: string, acceptOrderDto: AcceptOrderDto): Promise<Order> {
+        const driver = await this.getDriverProfile(userId);
+
+        if (driver.status !== DriverStatus.ONLINE) {
+            throw new BadRequestException('Driver must be online to accept orders');
+        }
+
+        const order = await this.orderRepository.findOne({
+            where: { id: acceptOrderDto.orderId },
+            relations: ['user'],
+        });
+
+        if (!order) {
+            throw new NotFoundException('Order not found');
+        }
+
+        if (order.status !== OrderStatus.PENDING && order.status !== OrderStatus.VALIDATED) {
+            throw new BadRequestException('Order is no longer available');
+        }
+
+        // Assign driver to order
+        order.driverId = driver.id;
+        order.status = OrderStatus.ASSIGNED;
+        order.assignedAt = new Date();
+        await this.orderRepository.save(order);
+
+        // Update driver capacity (approximate)
+        let totalWeight = 0;
+        for (const pkg of order.packages) {
+            totalWeight += pkg.weightKg;
+        }
+        driver.currentWeightKg += totalWeight;
+        await this.driverRepository.save(driver);
+
+        // Notify customer
+        await this.notificationsService.create({
+            userId: order.user.id,
+            orderId: order.id,
+            type: NotificationType.DRIVER_ASSIGNED,
+            title: 'Driver Assigned',
+            body: `A driver has been assigned to your order.`,
+            channels: [NotificationChannel.PUSH, NotificationChannel.SMS],
+            priority: NotificationPriority.NORMAL,
+        });
+
+        return order;
+    }
+
+    async updateOrderStatus(
+        userId: string,
+        orderId: string,
+        status: string,
+        proofPhoto?: string,
+    ): Promise<Order> {
+        const driver = await this.getDriverProfile(userId);
+        const order = await this.orderRepository.findOne({
+            where: { id: orderId },
+            relations: ['user'],
+        });
+
+        if (!order) {
+            throw new NotFoundException('Order not found');
+        }
+
+        if (order.driverId !== driver.id) {
+            throw new ForbiddenException('This order is not assigned to you');
+        }
+
+        let newStatus: OrderStatus;
+        switch (status) {
+            case 'picked_up':
+                newStatus = OrderStatus.PICKUP_COMPLETED;
+                order.pickupCompletedAt = new Date();
+                break;
+            case 'delivered':
+                newStatus = OrderStatus.DELIVERED;
+                order.deliveredAt = new Date();
+                break;
+            case 'failed':
+                newStatus = OrderStatus.FAILED;
+                break;
+            default:
+                throw new BadRequestException('Invalid status');
+        }
+
+        order.status = newStatus;
+        await this.orderRepository.save(order);
+
+        // Notify customer
+        let notificationTitle = '';
+        let notificationBody = '';
+        let notificationType = NotificationType.DELIVERY_COMPLETED;
+
+        if (status === 'picked_up') {
+            notificationTitle = 'Package Picked Up';
+            notificationBody = 'Your package has been picked up and is on its way.';
+            notificationType = NotificationType.PACKAGE_COLLECTED;
+        } else if (status === 'delivered') {
+            notificationTitle = 'Package Delivered';
+            notificationBody = 'Your package has been successfully delivered.';
+            notificationType = NotificationType.DELIVERY_COMPLETED;
+        } else if (status === 'failed') {
+            notificationTitle = 'Delivery Failed';
+            notificationBody = 'We could not complete your delivery. Our team will contact you.';
+            notificationType = NotificationType.DELIVERY_FAILED;
+        }
+
+        await this.notificationsService.create({
+            userId: order.user.id,
+            orderId: order.id,
+            type: notificationType,
+            title: notificationTitle,
+            body: notificationBody,
+            channels: [NotificationChannel.PUSH, NotificationChannel.SMS],
+            priority: NotificationPriority.HIGH,
+        });
+
+        return order;
+    }
+
+    async getEarnings(userId: string): Promise<any> {
+        const driver = await this.getDriverProfile(userId);
+
+        const completedOrders = await this.orderRepository.find({
+            where: { driverId: driver.id, status: OrderStatus.DELIVERED },
+        });
+
+        const totalEarnings = completedOrders.reduce((sum, order) => sum + order.driverEarnings, 0);
+        const pendingOrders = await this.orderRepository.find({
+            where: { driverId: driver.id, status: OrderStatus.ASSIGNED },
+        });
+
+        return {
+            totalEarnings,
+            completedDeliveries: completedOrders.length,
+            pendingDeliveries: pendingOrders.length,
+            rating: driver.rating,
+        };
+    }
+}
