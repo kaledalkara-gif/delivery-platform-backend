@@ -19,12 +19,12 @@ export class Shipment extends BaseEntity {
   @Column({ name: 'order_id', type: 'uuid' })
   orderId!: string;
 
-  @ManyToOne(() => Driver)
+  @ManyToOne(() => Driver, { nullable: true })
   @JoinColumn({ name: 'driver_id' })
-  driver!: Driver;
+  driver!: Driver | null;
 
-  @Column({ name: 'driver_id', type: 'uuid' })
-  driverId!: string;
+  @Column({ name: 'driver_id', type: 'uuid', nullable: true })
+  driverId!: string | null;
 
   @Column({ type: 'enum', enum: ShipmentStatus, default: ShipmentStatus.PENDING })
   status!: ShipmentStatus;

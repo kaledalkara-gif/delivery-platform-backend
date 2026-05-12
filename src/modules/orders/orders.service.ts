@@ -141,7 +141,6 @@ export class OrdersService {
         // Create initial shipment record
         const shipment = new Shipment();
         shipment.order = savedOrder;
-        shipment.driver = null;
         shipment.status = ShipmentStatus.PENDING;
         shipment.originAddress = createDto.pickup.address;
         shipment.originLatitude = createDto.pickup.latitude;
