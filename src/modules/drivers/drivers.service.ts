@@ -83,29 +83,42 @@ export class DriversService {
             throw new BadRequestException('Driver must be online to see orders');
         }
 
-        // Find pending orders within 5km radius
-        const radiusKm = 5;
-        const orders = await this.orderRepository
-            .createQueryBuilder('order')
-            .where('order.status = :status', { status: OrderStatus.PENDING })
-            .andWhere(
-                `earth_distance(
-          ll_to_earth(order.pickupLatitude, order.pickupLongitude),
-          ll_to_earth(:lat, :lng)
-        ) <= :radius * 1000`,
-                {
-                    lat: driver.currentLat,
-                    lng: driver.currentLng,
-                    radius: radiusKm,
-                },
-            )
-            .leftJoinAndSelect('order.packages', 'packages')
-            .orderBy('earth_distance(ll_to_earth(order.pickupLatitude, order.pickupLongitude), ll_to_earth(:lat, :lng))', 'ASC')
-            .setParameters({ lat: driver.currentLat, lng: driver.currentLng })
-            .take(20)
-            .getMany();
+        // Get all pending orders
+        const allPendingOrders = await this.orderRepository.find({
+            where: { status: OrderStatus.PENDING },
+            relations: ['packages'],
+        });
 
-        return orders;
+        // Calculate distance using Haversine formula (in km)
+        const radiusKm = 5;
+        const nearbyOrders = allPendingOrders
+            .map(order => ({
+                order,
+                distance: this.calculateDistance(
+                    driver.currentLat!,
+                    driver.currentLng!,
+                    order.pickupLatitude,
+                    order.pickupLongitude,
+                ),
+            }))
+            .filter(item => item.distance <= radiusKm)
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 20)
+            .map(item => item.order);
+
+        return nearbyOrders;
+    }
+
+    // Add this helper method to your DriversService class
+    private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     async acceptOrder(userId: string, acceptOrderDto: AcceptOrderDto): Promise<Order> {
