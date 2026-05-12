@@ -5,6 +5,7 @@ import { getDatabaseConfig } from './config/database.config';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { DriversModule } from './modules/drivers/drivers.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { OrdersModule } from './modules/orders/orders.module';
     NotificationsModule,
     AuthModule,
     OrdersModule,
+    DriversModule,
   ],
 })
 export class AppModule { }
