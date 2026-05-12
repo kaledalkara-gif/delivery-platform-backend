@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getDatabaseConfig } from './config/database.config';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       useFactory: (configService: ConfigService) => getDatabaseConfig(configService),
       inject: [ConfigService],
     }),
-    NotificationsModule,  // ✅ Add this
+    NotificationsModule,
+    AuthModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

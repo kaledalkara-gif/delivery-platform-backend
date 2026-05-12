@@ -11,7 +11,7 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private notificationRepository: Repository<Notification>,
-  ) {}
+  ) { }
 
   async create(createDto: CreateNotificationDto): Promise<Notification> {
     const notification = this.notificationRepository.create({
@@ -28,7 +28,7 @@ export class NotificationsService {
     });
 
     const saved = await this.notificationRepository.save(notification);
-    
+
     // Trigger sending (async)
     this.send(saved).catch(err => {
       this.logger.error(`Failed to send notification ${saved.id}: ${err.message}`);
@@ -41,7 +41,7 @@ export class NotificationsService {
     // Implementation will depend on your push notification service (FCM for push, Twilio for SMS)
     // This is a placeholder
     this.logger.log(`Sending notification ${notification.id} to user ${notification.userId}`);
-    
+
     // Update status
     notification.status = NotificationStatus.SENT;
     notification.sentAt = new Date();
