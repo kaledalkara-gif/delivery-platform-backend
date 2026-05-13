@@ -6,6 +6,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AuthModule } from './modules/auth/auth.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { DriversModule } from './modules/drivers/drivers.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { DriversModule } from './modules/drivers/drivers.module';
     AuthModule,
     OrdersModule,
     DriversModule,
+    TrackingModule,
   ],
 })
 export class AppModule { }
