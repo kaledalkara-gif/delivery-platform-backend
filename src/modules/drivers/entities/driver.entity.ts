@@ -51,7 +51,16 @@ export class Driver extends BaseEntity {
   @Column({ type: 'integer', default: 50000 })
   maxVolumeCm3!: number;
 
-  @Column({ type: 'decimal', precision: 8, scale: 2, default: 0 })
+  @Column({
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    }
+  })
   currentWeightKg!: number;
 
   @Column({ type: 'integer', default: 0 })

@@ -1,3 +1,5 @@
+// src/modules/drivers/drivers.service.ts
+
 import {
     Injectable,
     NotFoundException,
@@ -46,12 +48,10 @@ export class DriversService {
     async updateLocation(userId: string, updateLocationDto: UpdateLocationDto): Promise<Driver> {
         const driver = await this.getDriverProfile(userId);
 
-        // Update driver's current location
         driver.currentLat = updateLocationDto.latitude;
         driver.currentLng = updateLocationDto.longitude;
         await this.driverRepository.save(driver);
 
-        // Save location history
         const locationHistory = this.driverLocationRepository.create({
             driverId: driver.id,
             latitude: updateLocationDto.latitude,
@@ -65,10 +65,8 @@ export class DriversService {
 
     async updateStatus(userId: string, updateStatusDto: UpdateStatusDto): Promise<Driver> {
         const driver = await this.getDriverProfile(userId);
-
         driver.status = updateStatusDto.status;
         await this.driverRepository.save(driver);
-
         return driver;
     }
 
@@ -83,13 +81,11 @@ export class DriversService {
             throw new BadRequestException('Driver must be online to see orders');
         }
 
-        // Get all pending orders
         const allPendingOrders = await this.orderRepository.find({
             where: { status: OrderStatus.PENDING },
             relations: ['packages'],
         });
 
-        // Calculate distance using Haversine formula (in km)
         const radiusKm = 5;
         const nearbyOrders = allPendingOrders
             .map(order => ({
@@ -109,9 +105,8 @@ export class DriversService {
         return nearbyOrders;
     }
 
-    // Add this helper method to your DriversService class
     private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-        const R = 6371; // Earth's radius in km
+        const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -130,7 +125,7 @@ export class DriversService {
 
         const order = await this.orderRepository.findOne({
             where: { id: acceptOrderDto.orderId },
-            relations: ['user'],
+            relations: ['user', 'packages'],
         });
 
         if (!order) {
@@ -141,21 +136,24 @@ export class DriversService {
             throw new BadRequestException('Order is no longer available');
         }
 
-        // Assign driver to order
         order.driverId = driver.id;
         order.status = OrderStatus.ASSIGNED;
         order.assignedAt = new Date();
         await this.orderRepository.save(order);
 
-        // Update driver capacity (approximate)
+        // ✅ FIX: Convert to numbers explicitly
         let totalWeight = 0;
-        for (const pkg of order.packages) {
-            totalWeight += pkg.weightKg;
+        if (order.packages && order.packages.length > 0) {
+            for (const pkg of order.packages) {
+                totalWeight += Number(pkg.weightKg) || 0;  // ✅ Ensure number
+            }
         }
-        driver.currentWeightKg += totalWeight;
+
+        // ✅ Ensure currentWeightKg is a number
+        const currentWeight = Number(driver.currentWeightKg) || 0;
+        driver.currentWeightKg = currentWeight + totalWeight;  // ✅ Numeric addition
         await this.driverRepository.save(driver);
 
-        // Notify customer
         await this.notificationsService.create({
             userId: order.user.id,
             orderId: order.id,
@@ -176,6 +174,7 @@ export class DriversService {
         proofPhoto?: string,
     ): Promise<Order> {
         const driver = await this.getDriverProfile(userId);
+
         const order = await this.orderRepository.findOne({
             where: { id: orderId },
             relations: ['user'],
@@ -198,6 +197,9 @@ export class DriversService {
             case 'delivered':
                 newStatus = OrderStatus.DELIVERED;
                 order.deliveredAt = new Date();
+                if (proofPhoto) {
+                    console.log(`Delivery proof for order ${orderId}: ${proofPhoto}`);
+                }
                 break;
             case 'failed':
                 newStatus = OrderStatus.FAILED;
@@ -209,7 +211,6 @@ export class DriversService {
         order.status = newStatus;
         await this.orderRepository.save(order);
 
-        // Notify customer
         let notificationTitle = '';
         let notificationBody = '';
         let notificationType = NotificationType.DELIVERY_COMPLETED;
