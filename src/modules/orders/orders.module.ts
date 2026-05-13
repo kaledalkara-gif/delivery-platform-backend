@@ -9,11 +9,12 @@ import { Package } from './entities/package.entity';
 import { Shipment } from './entities/shipment.entity';
 import { User } from '../users/entities/user.entity';  // ← Import User
 import { NotificationsModule } from '../notifications/notifications.module';
+import { TrackingModule } from '../tracking/tracking.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Order, Package, Shipment, User]),  // ← Add User here
-        NotificationsModule,
+        NotificationsModule, TrackingModule,
     ],
     controllers: [OrdersController],
     providers: [OrdersService],
