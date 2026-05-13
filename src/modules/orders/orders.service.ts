@@ -20,6 +20,7 @@ import {
     NotificationChannel,
     NotificationPriority
 } from '../notifications/entities/notification.entity';
+import { TrackingGateway } from '../tracking/tracking.gateway';
 
 @Injectable()
 export class OrdersService {
@@ -31,6 +32,7 @@ export class OrdersService {
         @InjectRepository(Shipment)
         private shipmentRepository: Repository<Shipment>,
         private notificationsService: NotificationsService,
+        private trackingGateway: TrackingGateway,
     ) { }
 
     async createOrder(user: User, createDto: CreateOrderDto): Promise<Order> {
