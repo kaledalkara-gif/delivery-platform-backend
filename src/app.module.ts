@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
+import { ProofModule } from './modules/proof/proof.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { TrackingModule } from './modules/tracking/tracking.module';
     OrdersModule,
     DriversModule,
     TrackingModule,
+    ProofModule,
   ],
 })
 export class AppModule { }
