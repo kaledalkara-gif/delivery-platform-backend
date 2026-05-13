@@ -70,7 +70,9 @@ export class TrackingGateway implements OnGatewayConnection, OnGatewayDisconnect
             client.join(`driver:${driver.id}`);
 
         } catch (error) {
-            this.logger.error(`Connection error: ${error}`);
+            // ✅ Safe error handling for unknown type
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Connection error: ${errorMessage}`);
             client.disconnect();
         }
     }
