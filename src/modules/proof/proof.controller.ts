@@ -11,8 +11,9 @@ import {
     UseGuards,
     Res,
     StreamableFile,
+    BadRequestException,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express'; // ✅ From platform-express
 import { Response } from 'express';
 import { createReadStream } from 'fs';
 import { join } from 'path';
@@ -21,7 +22,6 @@ import { UploadProofDto } from './dto/upload-proof.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// ✅ Simple type definition for uploaded file
 interface UploadedFileType {
     buffer: Buffer;
     originalname: string;
@@ -36,12 +36,24 @@ export class ProofController {
     constructor(private readonly proofService: ProofService) { }
 
     @Post('upload-photo')
-    @UseInterceptors(FileInterceptor('photo'))
+    @UseInterceptors(FileInterceptor('photo', {
+        limits: {
+            fileSize: 5 * 1024 * 1024, // 5MB limit
+        },
+    }))
     async uploadPhoto(
         @CurrentUser('id') userId: string,
-        @UploadedFile() file: UploadedFileType, // ✅ FIXED: Use custom interface
+        @UploadedFile() file: UploadedFileType,
         @Body() body: UploadProofDto,
     ) {
+        console.log('File received:', file ? 'YES' : 'NO');
+
+        if (!file) {
+            throw new BadRequestException(
+                'No file uploaded. Make sure the field name is "photo"'
+            );
+        }
+
         const proof = await this.proofService.uploadPhoto(
             body.orderId,
             file,
@@ -49,6 +61,43 @@ export class ProofController {
             body.recipientPhone,
             body.notes,
         );
+
+        return {
+            success: true,
+            message: 'Photo uploaded successfully',
+            data: proof,
+        };
+    }
+
+    // Alternative Base64 upload method (no multer needed)
+    @Post('upload-photo-base64')
+    async uploadPhotoBase64(
+        @CurrentUser('id') userId: string,
+        @Body() body: UploadProofDto & { photoBase64: string },
+    ) {
+        if (!body.photoBase64) {
+            throw new BadRequestException('No photo data provided');
+        }
+
+        const base64Data = body.photoBase64.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+
+        const file = {
+            buffer,
+            originalname: `photo_${Date.now()}.jpg`,
+            size: buffer.length,
+            mimetype: 'image/jpeg',
+            fieldname: 'photo',
+        };
+
+        const proof = await this.proofService.uploadPhoto(
+            body.orderId,
+            file,
+            body.recipientName,
+            body.recipientPhone,
+            body.notes,
+        );
+
         return {
             success: true,
             message: 'Photo uploaded successfully',
@@ -106,8 +155,6 @@ export class ProofController {
         @Param('orderId') orderId: string,
         @Body() body: { proofId: string },
     ) {
-        // Note: You may want to fetch the actual driverId from the database
-        // using the userId. For now, using userId as driverId (simplified)
         const driverId = userId;
         const order = await this.proofService.markOrderDeliveredWithProof(
             orderId,
