@@ -45,6 +45,9 @@ export class User extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   firebaseToken!: string | null;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  stripeCustomerId!: string | null;
+
   // Relationships
   @OneToMany(() => Order, order => order.user)
   orders!: Order[];
