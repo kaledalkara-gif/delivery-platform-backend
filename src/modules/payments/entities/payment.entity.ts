@@ -1,19 +1,17 @@
-// src/modules/payments/entities/payment.entity.ts
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Order } from '../../orders/entities/order.entity';
 
 export enum PaymentStatus {
   PENDING = 'pending',
-  COMPLETED = 'completed',
+  SUCCEEDED = 'succeeded',
   FAILED = 'failed',
   REFUNDED = 'refunded',
 }
 
 export enum PaymentMethod {
-  CASH = 'cash',
   CARD = 'card',
-  WALLET = 'wallet',
+  CASH = 'cash',
 }
 
 @Entity('payments')
@@ -28,6 +26,9 @@ export class Payment extends BaseEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount!: number;
 
+  @Column({ type: 'varchar', length: 3, default: 'USD' })
+  currency!: string;
+
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
   status!: PaymentStatus;
 
@@ -38,8 +39,11 @@ export class Payment extends BaseEntity {
   stripePaymentIntentId!: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  stripeTransactionId!: string | null;
+  stripeCustomerId!: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
   paidAt!: Date | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  metadata!: Record<string, any> | null;
 }
