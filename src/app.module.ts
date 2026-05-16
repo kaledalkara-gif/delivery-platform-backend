@@ -10,6 +10,7 @@ import { DriversModule } from './modules/drivers/drivers.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
 import { ProofModule } from './modules/proof/proof.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     TrackingModule,
     ProofModule,
     PaymentsModule,
+    HealthModule,
   ],
 })
 export class AppModule { }
