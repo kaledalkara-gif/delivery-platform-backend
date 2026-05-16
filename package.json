@@ -35,7 +35,8 @@
     "backup": "bash scripts/backup.sh",
     "backup:windows": "powershell -File scripts/backup.ps1",
     "restore": "bash scripts/restore.sh",
-    "restore:windows": "powershell -File scripts/restore.ps1"
+    "restore:windows": "powershell -File scripts/restore.ps1",
+    "migrate": "node scripts/run-migrations.js"
   },
   "dependencies": {
     "@nestjs/cli": "^11.0.0",
