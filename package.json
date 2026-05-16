@@ -21,7 +21,16 @@
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "migration:generate": "npm run typeorm -- migration:generate -d src/database/data-source.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/database/data-source.ts",
-    "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts"
+    "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
+    "start:pm2": "pm2 start ecosystem.config.js",
+    "stop:pm2": "pm2 stop delivery-platform",
+    "restart:pm2": "pm2 restart delivery-platform",
+    "logs:pm2": "pm2 logs delivery-platform",
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:windows": "powershell -File scripts/deploy.ps1",
+    "docker:build": "docker build -t delivery-platform .",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
