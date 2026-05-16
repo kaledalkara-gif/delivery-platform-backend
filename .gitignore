@@ -32,5 +32,8 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# Keep .gitkeep files (they preserve empty directories)
+!.gitkeep
+
 # TypeORM migrations (optional - some teams commit them, some don't)
 # src/database/migrations/*.ts  # Uncomment if you DO want to commit migrations

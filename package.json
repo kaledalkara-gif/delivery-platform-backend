@@ -30,7 +30,11 @@
     "deploy:windows": "powershell -File scripts/deploy.ps1",
     "docker:build": "docker build -t delivery-platform .",
     "docker:up": "docker-compose up",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "backup": "bash scripts/backup.sh",
+    "backup:windows": "powershell -File scripts/backup.ps1",
+    "restore": "bash scripts/restore.sh",
+    "restore:windows": "powershell -File scripts/restore.ps1"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
