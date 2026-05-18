@@ -23,7 +23,7 @@ export class Shipment extends BaseEntity {
   @JoinColumn({ name: 'driver_id' })
   driver!: Driver | null;
 
-  @Column({ name: 'driver_id', type: 'uuid', nullable: true })
+  @Column({ name: 'driver_id', type: 'uuid', nullable: true })  // ✅ nullable: true
   driverId!: string | null;
 
   @Column({ type: 'enum', enum: ShipmentStatus, default: ShipmentStatus.PENDING })
