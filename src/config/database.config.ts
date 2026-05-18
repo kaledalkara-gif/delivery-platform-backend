@@ -10,6 +10,9 @@ export const getDatabaseConfig = (configService: ConfigService): DataSourceOptio
   database: configService.get('DB_DATABASE'),
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
-  synchronize: false, // NEVER true in production! Use migrations.
+  synchronize: false,
   logging: configService.get('NODE_ENV') === 'development',
+  ssl: configService.get('NODE_ENV') === 'production' 
+    ? { rejectUnauthorized: false } 
+    : false,
 });
