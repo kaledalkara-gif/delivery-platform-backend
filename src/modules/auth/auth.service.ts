@@ -20,6 +20,8 @@ export class AuthService {
     ) { }
 
     async register(registerDto: RegisterDto): Promise<{ user: Partial<User>; token: string }> {
+
+
         // Check if user already exists
         const existingUser = await this.userRepository.findOne({
             where: { email: registerDto.email },
@@ -39,7 +41,7 @@ export class AuthService {
             name: registerDto.name,
             phone: registerDto.phone,
             address: registerDto.address,
-            role: UserRole.CUSTOMER,
+            role: registerDto.role || UserRole.CUSTOMER,
             isActive: true,
         });
 
@@ -148,4 +150,5 @@ export class AuthService {
 
         return this.jwtService.sign(payload);
     }
+
 }
