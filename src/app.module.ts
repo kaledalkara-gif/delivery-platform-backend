@@ -11,6 +11,7 @@ import { TrackingModule } from './modules/tracking/tracking.module';
 import { ProofModule } from './modules/proof/proof.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { HealthModule } from './modules/health/health.module';
+import { DispatcherModule } from './modules/dispatcher/dispatcher.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { HealthModule } from './modules/health/health.module';
     ProofModule,
     PaymentsModule,
     HealthModule,
+    DispatcherModule,
   ],
 })
 export class AppModule { }
