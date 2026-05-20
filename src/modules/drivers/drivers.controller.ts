@@ -45,6 +45,11 @@ export class DriversController {
         return this.driversService.getNearbyOrders(userId);
     }
 
+    @Get('assigned-orders')
+    async getAssignedOrders(@CurrentUser('id') userId: string) {
+        return this.driversService.getAssignedOrders(userId);
+    }
+
     @Post('accept-order')
     async acceptOrder(
         @CurrentUser('id') userId: string,

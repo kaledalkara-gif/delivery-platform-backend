@@ -105,6 +105,22 @@ export class DriversService {
         return nearbyOrders;
     }
 
+    // get all accepted orders
+    async getAssignedOrders(userId: string): Promise<Order[]> {
+        const driver = await this.getDriverProfile(userId);
+
+        if (driver.status !== DriverStatus.ONLINE) {
+            throw new BadRequestException('Driver must be online to see orders');
+        }
+
+        const allAssignedOrders = await this.orderRepository.find({
+            where: { status: OrderStatus.ASSIGNED },
+            relations: ['packages'],
+        });
+
+        return allAssignedOrders;
+    }
+
     private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
