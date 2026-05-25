@@ -8,6 +8,7 @@ import {
     Param,
     Body,
     UseGuards,
+    ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -18,6 +19,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+
+// ✅ Protected admin email (never allow modification)
+const PROTECTED_ADMIN_EMAIL = 'admin@example.com';
+
+// ✅ Helper function to check if user is protected admin
+const isProtectedAdmin = (email: string): boolean => {
+    return email === PROTECTED_ADMIN_EMAIL;
+};
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -30,7 +39,7 @@ export class AdminController {
         private driverRepository: Repository<Driver>,
     ) { }
 
-    // Get all users
+    // Get all users (admin can see all)
     @Get('users')
     async getAllUsers() {
         return this.userRepository.find({
@@ -48,21 +57,26 @@ export class AdminController {
         });
     }
 
-    // Change user role
+    // Change user role (with admin protection)
     @Patch('users/:id/role')
     async changeUserRole(
         @Param('id') id: string,
         @Body('role') role: UserRole,
-        @CurrentUser() currentUser: { id: string },
+        @CurrentUser() currentUser: { id: string; email: string },
     ) {
-        // Prevent admin from changing their own role
-        if (id === currentUser.id) {
-            throw new Error('You cannot change your own role');
-        }
-
         const user = await this.userRepository.findOne({ where: { id } });
         if (!user) {
             throw new Error('User not found');
+        }
+
+        // ✅ PROTECTION: Cannot change protected admin account
+        if (isProtectedAdmin(user.email)) {
+            throw new ForbiddenException('The master admin account cannot be modified');
+        }
+
+        // ✅ PROTECTION: Admin cannot change their own role
+        if (id === currentUser.id) {
+            throw new ForbiddenException('You cannot change your own role');
         }
 
         const oldRole = user.role;
@@ -92,12 +106,25 @@ export class AdminController {
         return { message: `User role changed from ${oldRole} to ${role}` };
     }
 
-    // Reset user password
+    // Reset user password (with admin protection)
     @Post('users/:id/reset-password')
-    async resetPassword(@Param('id') id: string) {
+    async resetPassword(
+        @Param('id') id: string,
+        @CurrentUser() currentUser: { id: string; email: string },
+    ) {
         const user = await this.userRepository.findOne({ where: { id } });
         if (!user) {
             throw new Error('User not found');
+        }
+
+        // ✅ PROTECTION: Cannot reset protected admin password
+        if (isProtectedAdmin(user.email)) {
+            throw new ForbiddenException('The master admin account password cannot be reset');
+        }
+
+        // ✅ PROTECTION: Other admins cannot reset the password of another admin
+        if (user.role === UserRole.ADMIN && user.id !== currentUser.id) {
+            throw new ForbiddenException('You cannot reset another admin\'s password');
         }
 
         const defaultPassword = '123456';
@@ -111,12 +138,25 @@ export class AdminController {
         };
     }
 
-    // Activate/Deactivate user account
+    // Toggle user active status (with admin protection)
     @Patch('users/:id/toggle-status')
-    async toggleUserStatus(@Param('id') id: string) {
+    async toggleUserStatus(
+        @Param('id') id: string,
+        @CurrentUser() currentUser: { id: string; email: string },
+    ) {
         const user = await this.userRepository.findOne({ where: { id } });
         if (!user) {
             throw new Error('User not found');
+        }
+
+        // ✅ PROTECTION: Cannot deactivate protected admin account
+        if (isProtectedAdmin(user.email)) {
+            throw new ForbiddenException('The master admin account cannot be deactivated');
+        }
+
+        // ✅ PROTECTION: Admin cannot deactivate themselves
+        if (id === currentUser.id) {
+            throw new ForbiddenException('You cannot deactivate your own account');
         }
 
         user.isActive = !user.isActive;
@@ -128,7 +168,7 @@ export class AdminController {
         };
     }
 
-    // Get all drivers (with details)
+    // Get all drivers
     @Get('drivers')
     async getAllDrivers() {
         return this.driverRepository.find({
@@ -137,7 +177,7 @@ export class AdminController {
         });
     }
 
-    // Get statistics
+    // Get admin statistics (excluding protected admin from counts if needed)
     @Get('stats')
     async getAdminStats() {
         const [totalUsers, totalCustomers, totalDrivers, totalDispatchers] = await Promise.all([

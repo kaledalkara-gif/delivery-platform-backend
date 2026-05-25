@@ -22,26 +22,39 @@ export class SeedService implements OnApplicationBootstrap {
         const adminEmail = 'admin@example.com';
         const adminPassword = '123456';
 
-        // Check if admin already exists
-        const existingAdmin = await this.userRepository.findOne({
+        let admin = await this.userRepository.findOne({
             where: { email: adminEmail },
         });
 
-        if (!existingAdmin) {
+        if (!admin) {
             const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
-            const admin = this.userRepository.create({
+            admin = this.userRepository.create({
                 email: adminEmail,
                 passwordHash: hashedPassword,
                 name: 'System Administrator',
                 role: UserRole.ADMIN,
-                isActive: true,
+                isActive: true,  // ✅ Always active
             });
 
             await this.userRepository.save(admin);
             this.logger.log('✅ Default admin account created: admin@example.com / 123456');
         } else {
-            this.logger.log('ℹ️ Admin account already exists');
+            // ✅ Ensure admin is always active (in case someone accidentally deactivated)
+            if (!admin.isActive) {
+                admin.isActive = true;
+                await this.userRepository.save(admin);
+                this.logger.log('✅ Reactivated master admin account');
+            }
+
+            // ✅ Ensure admin role is never changed
+            if (admin.role !== UserRole.ADMIN) {
+                admin.role = UserRole.ADMIN;
+                await this.userRepository.save(admin);
+                this.logger.log('✅ Restored master admin role');
+            }
+
+            this.logger.log('ℹ️ Master admin account is protected and active');
         }
     }
 }
