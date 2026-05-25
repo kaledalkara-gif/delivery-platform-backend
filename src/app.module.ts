@@ -12,6 +12,7 @@ import { ProofModule } from './modules/proof/proof.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { HealthModule } from './modules/health/health.module';
 import { DispatcherModule } from './modules/dispatcher/dispatcher.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { DispatcherModule } from './modules/dispatcher/dispatcher.module';
     PaymentsModule,
     HealthModule,
     DispatcherModule,
+    AdminModule,
   ],
 })
 export class AppModule { }
