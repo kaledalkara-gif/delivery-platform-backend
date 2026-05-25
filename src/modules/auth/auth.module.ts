@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { User } from '../users/entities/user.entity';
 import { Driver } from '../drivers/entities/driver.entity';
+import { SeedService } from './seed.service';
 
 @Module({
     imports: [
@@ -25,7 +26,7 @@ import { Driver } from '../drivers/entities/driver.entity';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, JwtStrategy],
+    providers: [AuthService, JwtStrategy, SeedService],
     exports: [AuthService],
 })
 export class AuthModule { }
